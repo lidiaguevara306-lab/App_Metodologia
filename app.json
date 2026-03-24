@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "BlockDeNote",
+    "slug": "BlockDeNote",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "platforms": ["ios", "android", "web"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.animecrex.BlockDeNote"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.animecrex.BlockDeNote"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "scheme": "blockdenote",
+    "extra": {
+      "eas": {
+        "projectId": "387de284-5ab3-4632-9c7e-6a4e67123b5c"
+      }
+    },
+    "plugins": [
+      "expo-local-authentication"
+    ]
+  }
+}
