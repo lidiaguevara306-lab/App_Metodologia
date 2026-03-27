@@ -6,61 +6,72 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  FlatList,
 } from "react-native";
 
 import * as SQLite from "expo-sqlite";
 import * as LocalAuthentication from "expo-local-authentication";
 
-const db = SQLite.openDatabase("asistencia.db");
+const db = SQLite.openDatabaseSync("asistencia.db");
 
 export default function RegisterScreen() {
   const [matricula, setMatricula] = useState("");
   const [nombre, setNombre] = useState("");
   const [huellaValidada, setHuellaValidada] = useState(false);
+  const [alumnos, setAlumnos] = useState([]);
 
-  // Crear tabla
+  // Crear tabla y cargar datos
   useEffect(() => {
-    db.transaction((tx) => {
-      tx.executeSql(
-        "CREATE TABLE IF NOT EXISTS alumnos (matricula TEXT PRIMARY KEY NOT NULL, nombre TEXT);"
+    db.execSync(`
+      CREATE TABLE IF NOT EXISTS alumnos (
+        matricula TEXT PRIMARY KEY NOT NULL,
+        nombre TEXT
       );
-    });
+    `);
+
+    cargarAlumnos();
   }, []);
 
-  // 🔐 BOTÓN HUELLA
-  const validarHuella = async () => {
+  // 🔄 Cargar registros
+  const cargarAlumnos = () => {
     try {
-      const compatible = await LocalAuthentication.hasHardwareAsync();
-
-      if (!compatible) {
-        Alert.alert("Error", "No hay biometría");
-        return;
-      }
-
-      const enrolled = await LocalAuthentication.isEnrolledAsync();
-
-      if (!enrolled) {
-        Alert.alert("Error", "No hay huellas registradas");
-        return;
-      }
-
-      const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: "Escanea tu huella",
-      });
-
-      if (result.success) {
-        setHuellaValidada(true);
-        Alert.alert("Huella validada");
-      } else {
-        setHuellaValidada(false);
-        Alert.alert("Falló la huella");
-      }
+      const result = db.getAllSync("SELECT * FROM alumnos;");
+      setAlumnos(result);
     } catch (error) {
-      Alert.alert("Error en biometría");
+      console.log("Error al cargar alumnos", error);
     }
   };
 
-  // 📝 BOTÓN REGISTRAR
+  // 🔐 Validar huella
+  const validarHuella = async () => {
+    const compatible = await LocalAuthentication.hasHardwareAsync();
+
+    if (!compatible) {
+      Alert.alert("Error", "No hay biometría");
+      return;
+    }
+
+    const enrolled = await LocalAuthentication.isEnrolledAsync();
+
+    if (!enrolled) {
+      Alert.alert("Error", "No hay huellas registradas");
+      return;
+    }
+
+    const result = await LocalAuthentication.authenticateAsync({
+      promptMessage: "Escanea tu huella",
+    });
+
+    if (result.success) {
+      setHuellaValidada(true);
+      Alert.alert("Huella validada");
+    } else {
+      setHuellaValidada(false);
+      Alert.alert("Falló la huella");
+    }
+  };
+
+  // 📝 Registrar alumno
   const registrarAlumno = () => {
     if (matricula.trim() === "" || nombre.trim() === "") {
       Alert.alert("Error", "Completa todos los campos");
@@ -72,24 +83,23 @@ export default function RegisterScreen() {
       return;
     }
 
-    db.transaction((tx) => {
-      tx.executeSql(
-        "INSERT INTO alumnos (matricula, nombre) values (?, ?);",
-        [matricula, nombre],
-        () => {
-          Alert.alert("Éxito", "Alumno registrado correctamente");
-
-          // Reset
-          setMatricula("");
-          setNombre("");
-          setHuellaValidada(false);
-        },
-        (_, error) => {
-          Alert.alert("Error", "La matrícula ya existe o falló el registro");
-          return true;
-        }
+    try {
+      db.runSync(
+        "INSERT INTO alumnos (matricula, nombre) VALUES (?, ?);",
+        [matricula, nombre]
       );
-    });
+
+      Alert.alert("Éxito", "Alumno registrado");
+
+      setMatricula("");
+      setNombre("");
+      setHuellaValidada(false);
+
+      cargarAlumnos(); // 🔥 actualizar lista
+
+    } catch (error) {
+      Alert.alert("Error", "La matrícula ya existe");
+    }
   };
 
   return (
@@ -112,15 +122,28 @@ export default function RegisterScreen() {
         onChangeText={setNombre}
       />
 
-      {/* BOTÓN HUELLA */}
       <TouchableOpacity style={styles.fingerprintButton} onPress={validarHuella}>
         <Text style={styles.buttonText}>Validar Huella</Text>
       </TouchableOpacity>
 
-      {/* BOTÓN REGISTRO */}
       <TouchableOpacity style={styles.registerButton} onPress={registrarAlumno}>
         <Text style={styles.buttonText}>Registrar Alumno</Text>
       </TouchableOpacity>
+
+      {/* 📋 LISTA DE REGISTROS */}
+      <Text style={styles.subtitle}>Alumnos registrados:</Text>
+
+      <FlatList
+        data={alumnos}
+        keyExtractor={(item) => item.matricula}
+        renderItem={({ item }) => (
+          <View style={styles.item}>
+            <Text style={styles.itemText}>
+              {item.matricula} - {item.nombre}
+            </Text>
+          </View>
+        )}
+      />
     </View>
   );
 }
@@ -129,45 +152,54 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
     padding: 20,
     backgroundColor: "#557ca6",
   },
   title: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: "bold",
     color: "#fff",
-    marginBottom: 20,
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  subtitle: {
+    marginTop: 20,
+    fontSize: 18,
+    color: "#fff",
+    fontWeight: "bold",
   },
   input: {
-    width: "100%",
     borderWidth: 1,
     borderColor: "#fff",
     padding: 10,
     borderRadius: 10,
-    marginBottom: 20,
-    backgroundColor: "rgba(255,255,255,0.2)",
+    marginBottom: 10,
     color: "#fff",
   },
   fingerprintButton: {
     backgroundColor: "#f39c12",
     padding: 12,
     borderRadius: 10,
-    width: "100%",
-    alignItems: "center",
     marginBottom: 10,
+    alignItems: "center",
   },
   registerButton: {
     backgroundColor: "#007bff",
     padding: 12,
     borderRadius: 10,
-    width: "100%",
     alignItems: "center",
   },
   buttonText: {
     color: "#fff",
-    fontSize: 18,
     fontWeight: "bold",
+  },
+  item: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    padding: 10,
+    borderRadius: 10,
+    marginTop: 5,
+  },
+  itemText: {
+    color: "#fff",
   },
 });
