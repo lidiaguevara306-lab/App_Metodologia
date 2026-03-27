@@ -13,7 +13,7 @@ export default function App() {
     return (
         <NavigationContainer>
             <Stack.Navigator initialRouteName="Register">
-                <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Registro' }} />
+                <Stack.Screen name="Register" component={RegisterScreen}/>
                 <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Iniciar Sesión' }} />
                 <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Mis Notas' }} />
                 <Stack.Screen name="Note" component={NoteScreen} options={{ title: 'Editar Nota' }} />

@@ -1,17 +1,21 @@
 {
   "expo": {
-    "name": "BlockDeNote",
-    "slug": "BlockDeNote",
+    "name": "UtcregistroHuella",
+    "slug": "UtcregistroHuella",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/lutc.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "platforms": ["ios", "android", "web"],
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.animecrex.BlockDeNote"
@@ -33,7 +37,8 @@
       }
     },
     "plugins": [
-      "expo-local-authentication"
+      "expo-local-authentication",
+      "expo-sqlite"
     ]
   }
 }
